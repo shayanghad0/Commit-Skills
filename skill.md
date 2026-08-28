@@ -1,268 +1,185 @@
-# Git Commit Assistant Skill
+---
+name: commitskillsh
+description: >
+  Git commit message assistant for CLI programming workflows. Trigger this skill whenever the user invokes /commitskillsh, asks for a commit message, says "what should I commit", wants to review git history for commit style, or says "commit text only". The skill reads the git diff/staged changes and full commit history, then proposes a single well-crafted conventional-commit message. It does NOT run git commit until the user explicitly approves the text. Use this skill any time the user is working in a terminal/CLI context and wants help crafting, reviewing, or approving a git commit message.
+---
+
+# /commitskillsh — Git Commit Text Assistant
 
 ## Purpose
 
-This skill turns the CLI into an intelligent Git commit assistant that generates high-quality commit messages based on repository history and staged changes.
-
-It enforces a two-step workflow:
-
-1. Generate **only** the commit message.
-2. After the user approves it, perform the commit and push.
+Help the user craft a high-quality `git commit -m "…"` message by:
+1. Inspecting the **full git commit history** to learn the project's commit style and conventions.
+2. Inspecting the **current staged diff** to understand what changed.
+3. Proposing **commit text only** — no commit is made yet.
+4. Waiting for the user to say **"accept"** (or any affirmative) before running `git commit -m "…" && git push`.
 
 ---
 
-# Rules
+## Trigger
 
-## Rule 1 — Never Commit Automatically
+Invoked when the user types `/commitskillsh` **or** says any of:
+- "commit text only"
+- "what should I commit"
+- "give me a commit message"
+- "suggest commit"
+- "ready to commit"
 
-When the user says:
+---
 
-* commit
-* create commit
-* commit this
-* generate commit
-* commit changes
-* make commit
-* write commit
+## Workflow
 
-**DO NOT** execute any Git command.
+### Step 1 — Read Commit History
 
-Instead:
+Run the following to understand the project's commit conventions (scope format, emoji use, length, language, etc.):
 
-1. Read the staged changes.
-2. Read previous Git commit history.
-3. Understand the project's existing commit style.
-4. Generate **ONLY** the commit message.
+```bash
+git log --oneline -40
+```
 
-Return nothing except the commit message.
+Then fetch a few full commit messages to study body style:
 
-No explanations.
+```bash
+git log --format="%B%n---" -10
+```
 
-No markdown.
+Identify patterns:
+- Conventional Commits? (`fix(scope):`, `feat:`, `chore:`, …)
+- Emoji prefixes?
+- Bullet-point bodies?
+- Language (English, Farsi/Persian mixed, etc.)
+- Average subject line length
 
-No code block.
+### Step 2 — Read Staged Diff
 
-No `git commit`.
+```bash
+git diff --cached --stat
+git diff --cached
+```
 
-No extra text.
+If nothing is staged, also check unstaged:
 
-Example output:
+```bash
+git status
+git diff --stat
+```
 
-```text
-fix(teacher): deduplicate students when multiple lessons share the same class
+> If nothing is staged AND nothing is modified, tell the user there is nothing to commit and stop.
 
-When a teacher teaches multiple lessons assigned to the same classroom, each lesson included a complete copy of the student list. This caused duplicate student entries throughout the teacher dashboard.
+### Step 3 — Propose Commit Text Only
+
+Using the history style as a template, write a commit message that:
+
+- Has a **subject line** ≤ 72 characters following the project's type/scope convention (e.g. `fix(module): short imperative summary`)
+- Has a **body** (when the change is non-trivial) that explains:
+  - **Why** the change was needed (the problem)
+  - **What** changed (brief technical summary)
+  - Bullet points for multiple sub-changes, matching the project's bullet style
+- Is written in the **same language** as the rest of the project's history
+
+Output format — show the proposed message in a fenced code block so the user can copy it easily:
+
+```
+<type>(<scope>): <short summary>
+
+<body paragraph explaining the problem / motivation>
 
 Changes:
 
-- Group overview classes by classId and merge lesson names.
-- Deduplicate students using a Map keyed by student id.
-- Fix duplicated student picker entries in behavior reports.
-- Preserve original class labels while removing duplicate rows.
+* <change 1>
+* <change 2>
+* <change 3>
 ```
+
+Then say:
+
+> **Type "accept" to commit and push, or edit the text and I'll use your version.**
 
 ---
 
-## Rule 2 — Learn Existing Style
+### Step 4 — Wait for Approval
 
-Before generating a commit message, inspect commit history.
+Do **not** run `git commit` yet. Wait for the user's next message.
 
-Commands that may be used:
-
-```bash
-git log --pretty=format:"%s%n%b----" -50
-```
-
-or
-
-```bash
-git log -50
-```
-
-Determine:
-
-* prefix style
-* scope naming
-* capitalization
-* formatting
-* body layout
-* bullet style
-* wording
-* tense
-* level of detail
-
-The new commit must match the existing style.
-
-Never invent a different format if the repository already has one.
+| User says | Action |
+|-----------|--------|
+| `accept` / `yes` / `ok` / `lgtm` / `push it` | Proceed to Step 5 with the proposed message |
+| Pastes edited text | Use the user's version as the commit message, proceed to Step 5 |
+| `no` / `cancel` / `stop` | Abort; tell the user no commit was made |
+| Asks for changes | Revise the message and show it again; repeat Step 3–4 |
 
 ---
 
-## Rule 3 — Commit Message Quality
+### Step 5 — Commit and Push
 
-Every commit message should include:
-
-* concise title
-* correct Conventional Commit prefix
-* scope when appropriate
-* detailed body
-* why the change was made
-* what changed
-* important implementation details
-* user-visible behavior changes if applicable
-
-Prefer this structure:
-
-```text
-type(scope): short summary
-
-Explain the problem.
-
-Changes:
-
-- change
-- change
-- change
-
-Result:
-
-- improvement
-- improvement
-```
-
----
-
-## Rule 4 — Approval Workflow
-
-If the user replies with:
-
-* accept
-* approved
-* yes
-* commit
-* do it
-* looks good
-* proceed
-
-Execute:
+Run:
 
 ```bash
-git add .
-git commit -m "<generated message>"
+git commit -m "<approved message first line>" -m "<body if present>"
 git push
 ```
 
-Use **exactly** the generated commit message.
+> Use two `-m` flags: first for the subject, second for the body. This keeps `git log --oneline` clean.
 
-Do not rewrite it.
+Report the result:
 
-Do not regenerate it.
-
-Do not shorten it.
-
----
-
-## Rule 5 — Regeneration
-
-If the user says:
-
-* regenerate
-* rewrite
-* better
-* shorter
-* longer
-* another
-
-Generate a new commit message.
-
-Do not commit anything.
+```
+✅ Committed and pushed.
+Commit: <short SHA from git rev-parse --short HEAD>
+Branch: <current branch>
+```
 
 ---
 
-## Rule 6 — Output Restrictions
+## Style Reference — Example Commit
 
-During commit-message generation:
+Below is a high-quality commit message in the conventional-commits style with a detailed body. Use this as a length and structure benchmark when the change is significant:
 
-Output must contain only the commit message.
+```
+fix(teacher): deduplicate students when multiple lessons share the same class
 
-Do not output:
+When a teacher teaches multiple lessons (e.g. xs and xx) in the same class
+(e.g. پایه هفتم — الف), the data.classes array contains one entry per
+lesson×class assignment, each carrying the full student list of that class.
+This caused every student to appear duplicated (once per lesson) in three
+places across the teacher dashboard:
 
-* explanations
-* notes
-* markdown
-* Git commands
-* analysis
-* reasoning
-* comments
+1. Overview "کلاس‌ها و دروس" — same class card appeared twice with identical
+   student lists, one per lesson name.
+2. MyStudents table — each student appeared N times (N = number of lessons
+   taught in their class).
+3. Behavior report dropdown — same duplication in the student picker.
 
-Only the final commit text.
+Changes:
 
----
-
-## Rule 7 — Conventional Commit Types
-
-Prefer:
-
-* feat
-* fix
-* refactor
-* perf
-* docs
-* style
-* test
-* build
-* ci
-* chore
-* revert
-
-Choose the most appropriate type automatically.
+* Overview: group data.classes by classId using a useMemo, merging lesson
+  names with " + " separator so each class renders a single card with
+  combined lesson names (e.g. "xs + xx — پایه هفتم — الف").
+* MyStudents: deduplicate students by id via a Map, keeping one row per
+  student with the classLabel from the first assignment encountered.
+* Behavior: same Map-based deduplication for the student dropdown, ensuring
+  each student appears exactly once regardless of how many lessons they are
+  assigned to in that class.
+```
 
 ---
 
-## Rule 8 — Analyze Current Changes
+## Rules
 
-Before writing the commit:
-
-Inspect staged changes using Git.
-
-Understand:
-
-* added features
-* deleted code
-* bug fixes
-* renamed files
-* moved files
-* refactors
-* performance improvements
-* documentation updates
-* tests
-
-The commit message must accurately describe the actual changes.
-
-Never guess.
+1. **Never commit without explicit user approval.**
+2. **Never invent changes** — only describe what the diff actually shows.
+3. **Mirror the project's commit language** (check history — it may be English, Persian, or mixed).
+4. **Subject line is imperative mood**, not past tense. ("fix bug" not "fixed bug")
+5. If the diff is very small (e.g. a single typo fix), a subject-only commit is fine — no body needed.
+6. If the diff touches many unrelated files, warn the user and suggest splitting into multiple commits before proceeding.
 
 ---
 
-## Rule 9 — Length
+## Error Handling
 
-The body should be detailed when the change is substantial.
-
-Large features or refactors may produce long commit messages similar to project history.
-
-Small fixes should remain concise.
-
-Match the repository's existing style.
-
----
-
-## Rule 10 — Final Behavior Summary
-
-| User says       | Assistant action                                                          |
-| --------------- | ------------------------------------------------------------------------- |
-| commit          | Analyze history and changes, then output only the commit message          |
-| regenerate      | Generate a different commit message only                                  |
-| shorter         | Rewrite a shorter commit message                                          |
-| longer          | Rewrite a more detailed commit message                                    |
-| accept          | Run `git add .`, `git commit`, then `git push` using the approved message |
-| commit and push | Execute commit and push only after an approved/generated message exists   |
-
-This workflow is mandatory and should always be followed.
+| Situation | Response |
+|-----------|----------|
+| Not a git repo | "This directory is not a git repository. Run `git init` first." |
+| Nothing staged or modified | "Nothing to commit. All files are clean." |
+| Push fails (no upstream) | Run `git push --set-upstream origin <branch>` and report the result |
+| Merge conflict markers in diff | Warn the user to resolve conflicts before committing |
