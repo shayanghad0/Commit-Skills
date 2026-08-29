@@ -127,6 +127,64 @@ All Mimo AI models share the same git provider identity:
 
 ---
 
+## Claude AI — All Models
+
+All Claude AI models share the same git provider identity:
+
+| Provider | Email | Name |
+|----------|-------|------|
+| Claude AI (all models) | claudeaimodels@atomicmail.io | Claude Ai |
+
+### Fable Series (Latest — 2026)
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `claude-fable-5` | Claude Fable 5 | Fable | General — frontier, 1M context, 128K output |
+
+### Opus Series — Flagship Models
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `claude-opus-5` | Claude Opus 5 | Opus | General — complex agentic coding, 1M context |
+| `claude-opus-4-8` | Claude Opus 4.8 | Opus | General — flagship, 200K context |
+| `claude-opus-4-7` | Claude Opus 4.7 | Opus | General — flagship, 200K context |
+| `claude-opus-4-6` | Claude Opus 4.6 | Opus | General — flagship, 200K context |
+| `claude-opus-4-5` | Claude Opus 4.5 | Opus | General — flagship, 200K context |
+
+### Sonnet Series — Balanced Models
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `claude-sonnet-5` | Claude Sonnet 5 | Sonnet | General — best speed + intelligence, 1M context |
+| `claude-sonnet-4-6` | Claude Sonnet 4.6 | Sonnet | General — balanced, 200K context |
+| `claude-sonnet-4-5` | Claude Sonnet 4.5 | Sonnet | General — balanced, 200K context |
+
+### Haiku Series — Fast Models
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `claude-haiku-4-5` | Claude Haiku 4.5 | Haiku | Fast — near-frontier, 200K context, 64K output |
+
+### Legacy Models (Retired)
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `claude-opus-4-1` | Claude Opus 4.1 | Legacy | General — retired Aug 2026 |
+| `claude-opus-4` | Claude Opus 4 | Legacy | General — retired Jun 2026 |
+| `claude-sonnet-4` | Claude Sonnet 4 | Legacy | General — retired Jun 2026 |
+| `claude-3-7-sonnet` | Claude 3.7 Sonnet | Legacy | General — retired Feb 2026 |
+| `claude-3-5-sonnet` | Claude 3.5 Sonnet | Legacy | General — retired Oct 2025 |
+| `claude-3-5-haiku` | Claude 3.5 Haiku | Legacy | Fast — retired Feb 2026 |
+| `claude-3-opus` | Claude 3 Opus | Legacy | General — retired Jan 2026 |
+| `claude-3-sonnet` | Claude 3 Sonnet | Legacy | General — retired Jul 2025 |
+| `claude-3-haiku` | Claude 3 Haiku | Legacy | Fast — retired Apr 2026 |
+| `claude-2` | Claude 2 | Legacy | General — retired Jul 2025 |
+| `claude-2-1` | Claude 2.1 | Legacy | General — retired Jul 2025 |
+| `claude-instant-1` | Claude Instant 1 | Legacy | Fast — retired Nov 2024 |
+| `claude-1` | Claude 1 | Legacy | General — retired Nov 2024 |
+
+---
+
 ## Quick Lookup Table (for the skill)
 
 When the user types `commit with ai {name}`, match `{name}` against **Model ID** (case-insensitive, hyphens optional).
@@ -135,6 +193,7 @@ When the user types `commit with ai {name}`, match `{name}` against **Model ID**
 |----------|-------|------|
 | DeepSeek (all models) | deepseekcustmgithub@atomicmail.io | DeepSeek |
 | Mimo AI (all models) | mimoai@atomicmail.io | Mimo Ai |
+| Claude AI (all models) | claudeaimodels@atomicmail.io | Claude Ai |
 
 ---
 
