@@ -1,7 +1,7 @@
 ---
 name: commitskillsh
 description: >
-  Git commit message assistant for CLI programming workflows. Trigger this skill whenever the user invokes /commitskillsh, asks for a commit message, says "what should I commit", wants to review git history for commit style, or says "commit text only". The skill reads the git diff/staged changes and full commit history, then proposes a single well-crafted conventional-commit message. It does NOT run git commit until the user explicitly approves the text. Use this skill any time the user is working in a terminal/CLI context and wants help crafting, reviewing, or approving a git commit message.
+  Git commit message assistant for CLI programming workflows. Trigger this skill whenever the user invokes /commitskillsh, says "commit", "commit text only", "what should I commit", "give me a commit message", "suggest commit", or "ready to commit". The skill reads git history and staged changes to generate a conventional-commit message — never committing until the user approves. Also handles in-session commands: "regenerate" (new message), "shorter", "longer", "accept", "commit and push". Use this skill any time the user is working in a terminal/CLI context and wants help crafting, reviewing, or approving a git commit message.
 ---
 
 # /commitskillsh — Git Commit Text Assistant
@@ -12,18 +12,69 @@ Help the user craft a high-quality `git commit -m "…"` message by:
 1. Inspecting the **full git commit history** to learn the project's commit style and conventions.
 2. Inspecting the **current staged diff** to understand what changed.
 3. Proposing **commit text only** — no commit is made yet.
-4. Waiting for the user to say **"accept"** (or any affirmative) before running `git commit -m "…" && git push`.
+4. Waiting for explicit approval before running `git commit && git push`.
 
 ---
 
 ## Trigger
 
 Invoked when the user types `/commitskillsh` **or** says any of:
-- "commit text only"
-- "what should I commit"
-- "give me a commit message"
-- "suggest commit"
-- "ready to commit"
+- `commit`
+- `commit text only`
+- `what should I commit`
+- `give me a commit message`
+- `suggest commit`
+- `ready to commit`
+- `commit with ai {name}` → activates **AI-Assisted Commit Mode** (see Parameters)
+
+---
+
+## Parameters
+
+### `commit with ai {name}` — AI-Assisted Commit Mode
+
+When the user says **`commit with ai {name}`** (e.g. `commit with ai gpt`, `commit with ai gemini`, `commit with ai claude`):
+
+1. **Read `Ai-commit.md`** from the project root:
+   ```bash
+   cat Ai-commit.md
+   ```
+   This file contains instructions, rules, or a custom prompt template that the named AI model should follow when generating the commit message (e.g. tone, format overrides, domain-specific conventions).
+
+2. **Read `Ai-list.md`** from the project root:
+   ```bash
+   cat Ai-list.md
+   ```
+   This file contains a list of registered/allowed AI names and their roles or configurations. Check that `{name}` appears in this list. If it does **not**, stop and tell the user:
+   > "`{name}` is not in `Ai-list.md`. Please add it first or use a registered AI name."
+
+3. **Apply the instructions from `Ai-commit.md`** on top of the normal workflow — they override or extend the default commit style rules. The `{name}` parameter is passed as context so the instructions in `Ai-commit.md` can be name-specific if the file is written that way.
+
+4. **Proceed with the normal workflow** (Steps 1–5) using the merged ruleset: git history style + `Ai-commit.md` instructions.
+
+5. **Label the proposed message** so the user knows which mode generated it:
+   > 🤖 **AI Mode: `{name}`** — generated using rules from `Ai-commit.md`
+
+**Error cases for AI mode:**
+
+| Situation | Response |
+|-----------|----------|
+| `Ai-commit.md` not found | "Could not find `Ai-commit.md` in the project root. Please create it with your AI commit instructions." |
+| `Ai-list.md` not found | "Could not find `Ai-list.md` in the project root. Please create it and add your registered AI names." |
+| `{name}` not in `Ai-list.md` | "`{name}` is not registered in `Ai-list.md`. Add it to the list before using this mode." |
+
+---
+
+## Commands (available after a message is proposed)
+
+| Command | Action |
+|---------|--------|
+| `commit` | Analyze history + staged changes → generate commit message |
+| `regenerate` | Generate a completely different commit message for the same diff |
+| `shorter` | Rewrite the current message with a shorter body |
+| `longer` | Rewrite the current message with more detail and context |
+| `accept` | Commit and push using the currently displayed message |
+| `commit and push` | Same as `accept` — execute commit and push |
 
 ---
 
@@ -77,7 +128,7 @@ Using the history style as a template, write a commit message that:
   - Bullet points for multiple sub-changes, matching the project's bullet style
 - Is written in the **same language** as the rest of the project's history
 
-Output format — show the proposed message in a fenced code block so the user can copy it easily:
+Output format — show the proposed message in a fenced code block:
 
 ```
 <type>(<scope>): <short summary>
@@ -93,20 +144,22 @@ Changes:
 
 Then say:
 
-> **Type "accept" to commit and push, or edit the text and I'll use your version.**
+> **Commands: `accept` · `regenerate` · `shorter` · `longer` — or paste your own text.**
 
 ---
 
-### Step 4 — Wait for Approval
+### Step 4 — Handle Commands
 
-Do **not** run `git commit` yet. Wait for the user's next message.
+Do **not** run `git commit` yet. Wait for the user's next message and respond as follows:
 
 | User says | Action |
 |-----------|--------|
-| `accept` / `yes` / `ok` / `lgtm` / `push it` | Proceed to Step 5 with the proposed message |
+| `accept` / `yes` / `ok` / `lgtm` / `push it` / `commit and push` | Proceed to Step 5 with the current message |
+| `regenerate` | Produce a new, distinct message for the same diff — different angle, different wording. Show it and repeat Step 4 |
+| `shorter` | Rewrite the current message with a condensed body (or subject-only if trivial). Show it and repeat Step 4 |
+| `longer` | Rewrite the current message with a more detailed body — expand the why, add more bullet points, explain edge cases. Show it and repeat Step 4 |
 | Pastes edited text | Use the user's version as the commit message, proceed to Step 5 |
 | `no` / `cancel` / `stop` | Abort; tell the user no commit was made |
-| Asks for changes | Revise the message and show it again; repeat Step 3–4 |
 
 ---
 
@@ -115,7 +168,8 @@ Do **not** run `git commit` yet. Wait for the user's next message.
 Run:
 
 ```bash
-git commit -m "<approved message first line>" -m "<body if present>"
+git add .
+git commit -m "<subject line>" -m "<body if present>"
 git push
 ```
 
@@ -133,7 +187,7 @@ Branch: <current branch>
 
 ## Style Reference — Example Commit
 
-Below is a high-quality commit message in the conventional-commits style with a detailed body. Use this as a length and structure benchmark when the change is significant:
+Use this as a length and structure benchmark when the change is significant:
 
 ```
 fix(teacher): deduplicate students when multiple lessons share the same class
@@ -161,6 +215,24 @@ Changes:
   each student appears exactly once regardless of how many lessons they are
   assigned to in that class.
 ```
+
+---
+
+## Conventional Commit Types Reference
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `refactor` | Code restructure, no behavior change |
+| `perf` | Performance improvement |
+| `docs` | Documentation only |
+| `style` | Formatting, whitespace (no logic change) |
+| `test` | Adding or fixing tests |
+| `build` | Build system or dependency changes |
+| `ci` | CI/CD configuration |
+| `chore` | Maintenance tasks |
+| `revert` | Reverting a previous commit |
 
 ---
 
