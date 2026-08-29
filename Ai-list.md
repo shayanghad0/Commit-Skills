@@ -92,14 +92,49 @@ All DeepSeek models share the same git provider identity:
 
 ---
 
+## Mimo AI — All Models
+
+All Mimo AI models share the same git provider identity:
+
+| Provider | Email | Name |
+|----------|-------|------|
+| Mimo AI (all models) | mimoai@atomicmail.io | Mimo Ai |
+
+### V2.5 Series (Latest — 2026)
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `mimo-v2.5-pro` | MiMo-V2.5-Pro | V2.5 | General — frontier, 1T params |
+| `mimo-v2.5-pro-base` | MiMo-V2.5-Pro-Base | V2.5 | General — 1T params, base |
+| `mimo-v2.5` | MiMo-V2.5 | V2.5 | General — 311B params |
+| `mimo-v2.5-base` | MiMo-V2.5-Base | V2.5 | General — 311B params, base |
+| `mimo-v2.5-dflash` | MiMo-V2.5-DFlash | V2.5 | General — 311B params, draft |
+
+### V2-Flash Series
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `mimo-v2-flash` | MiMo-V2-Flash | V2 | General — 310B params |
+| `mimo-v2-flash-base` | MiMo-V2-Flash-Base | V2 | General — 310B params, base |
+
+### Audio Series
+
+| Model ID | Full Name | Series | Type |
+|----------|-----------|--------|------|
+| `mimo-audio-7b-instruct` | MiMo-Audio-7B-Instruct | Audio | Any-to-Any — 8B params, instruct |
+| `mimo-audio-7b-base` | MiMo-Audio-7B-Base | Audio | Any-to-Any — 8B params, base |
+| `mimo-audio-tokenizer` | MiMo-Audio-Tokenizer | Audio | Audio — 1B params, tokenizer |
+
+---
+
 ## Quick Lookup Table (for the skill)
 
 When the user types `commit with ai {name}`, match `{name}` against **Model ID** (case-insensitive, hyphens optional).
-All models resolve to the same git identity:
 
-| Email | Name |
-|-------|------|
-| deepseekcustmgithub@atomicmail.io | DeepSeek |
+| Provider | Email | Name |
+|----------|-------|------|
+| DeepSeek (all models) | deepseekcustmgithub@atomicmail.io | DeepSeek |
+| Mimo AI (all models) | mimoai@atomicmail.io | Mimo Ai |
 
 ---
 
